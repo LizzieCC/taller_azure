@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Día 3 — Almacenamiento y Gestión de Datos · Azure</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --accent: #00c8ff;
+    --accent2: #7b61ff;
+    --accent3: #00e5a0;
+    --warn: #ff6b35;
+    --text: #e8edf5;
+    --muted: #6b7a99;
+    --border: #1e2d45;
+    --blob-bg: #00c8ff22;
+    --pg-bg:   #7b61ff22;
+    --dbr-bg:  #00e5a022;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 4rem 2rem;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 50%, #00c8ff18 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 30%, #7b61ff15 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 90%, #00e5a010 0%, transparent 60%);
+  }
+
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.4;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+
+  .hero-content { position: relative; text-align: center; max-width: 860px; }
+
+  .day-badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.35rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.15s ease both;
+  }
+
+  h1 .line1 { display: block; color: var(--text); }
+  h1 .line2 {
+    display: block;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 560px;
+    margin: 0 auto 3rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.45s ease both;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .stat-dot.blue   { background: var(--accent); }
+  .stat-dot.purple { background: var(--accent2); }
+  .stat-dot.green  { background: var(--accent3); }
+
+  .scroll-hint {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    color: var(--muted); font-size: 0.75rem; font-family: 'Space Mono', monospace;
+    animation: pulse 2s infinite;
+  }
+  .scroll-hint::after {
+    content: ''; width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--muted), transparent);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-section {
+    max-width: 900px; margin: 0 auto; padding: 6rem 2rem;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: 2rem; font-weight: 800; margin-bottom: 3rem;
+    color: var(--text);
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2), var(--accent3));
+    border-radius: 2px;
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .tl-item.visible { opacity: 1; transform: translateX(0); }
+
+  .tl-dot {
+    position: absolute; left: -2.35rem; top: 0.25rem;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+
+  .tl-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .tl-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .tl-desc { font-size: 0.9rem; color: var(--muted); }
+
+  .tl-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+  }
+  .tag-theory { background: #00c8ff18; color: var(--accent);  border: 1px solid #00c8ff40; }
+  .tag-portal { background: #7b61ff18; color: var(--accent2); border: 1px solid #7b61ff40; }
+  .tag-python { background: #00e5a018; color: var(--accent3); border: 1px solid #00e5a040; }
+  .tag-break  { background: #ff6b3518; color: var(--warn);    border: 1px solid #ff6b3540; }
+
+  /* ── SERVICE CARDS ── */
+  .services-section {
+    padding: 4rem 2rem 6rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s ease;
+  }
+  .service-card.visible { opacity: 1; transform: translateY(0); }
+  .service-card:hover { transform: translateY(-4px) !important; }
+
+  .service-card.blob  { border-color: #00c8ff30; }
+  .service-card.blob:hover  { border-color: var(--accent); }
+  .service-card.pg    { border-color: #7b61ff30; }
+  .service-card.pg:hover    { border-color: var(--accent2); }
+  .service-card.dbr   { border-color: #00e5a030; }
+  .service-card.dbr:hover   { border-color: var(--accent3); }
+
+  .card-glow {
+    position: absolute; top: -40px; right: -40px;
+    width: 120px; height: 120px; border-radius: 50%;
+    opacity: 0.15; filter: blur(30px);
+  }
+  .blob .card-glow  { background: var(--accent); }
+  .pg   .card-glow  { background: var(--accent2); }
+  .dbr  .card-glow  { background: var(--accent3); }
+
+  .card-title {
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .blob .card-title  { color: var(--accent); }
+  .pg   .card-title  { color: var(--accent2); }
+  .dbr  .card-title  { color: var(--accent3); }
+
+  .card-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; color: var(--muted); margin-bottom: 1rem;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  .card-desc { font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .card-features { list-style: none; }
+  .card-features li {
+    font-size: 0.85rem; color: var(--muted);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .card-features li:last-child { border-bottom: none; }
+  .card-features li::before { content: '→'; font-size: 0.75rem; }
+  .blob .card-features li::before { color: var(--accent); }
+  .pg   .card-features li::before { color: var(--accent2); }
+  .dbr  .card-features li::before { color: var(--accent3); }
+
+  /* ── CONCEPT BLOCKS ── */
+  .concepts-section { max-width: 900px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+
+  .concept-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .concept-block.visible { opacity: 1; transform: translateY(0); }
+
+  .concept-header {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+    cursor: pointer;
+  }
+
+  .concept-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; color: var(--muted);
+    width: 32px; text-align: right; flex-shrink: 0;
+  }
+
+  .concept-title { font-size: 1.05rem; font-weight: 600; flex: 1; }
+
+  .concept-toggle {
+    width: 24px; height: 24px;
+    border: 1px solid var(--border); border-radius: 4px;
+    display: grid; place-items: center;
+    font-size: 0.8rem; color: var(--muted);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .concept-block.open .concept-toggle { transform: rotate(45deg); }
+
+  .concept-body {
+    display: none;
+    padding-left: 3rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  .concept-block.open .concept-body { display: block; }
+
+  .concept-body p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem; }
+
+  .concept-body ul { list-style: none; margin-bottom: 0.75rem; }
+  .concept-body ul li {
+    font-size: 0.85rem; color: var(--muted);
+    padding: 0.2rem 0; display: flex; gap: 0.5rem;
+  }
+  .concept-body ul li::before { content: '·'; color: var(--accent); }
+
+  .tip-box {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent3);
+    padding: 0.75rem 1rem;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem; color: var(--muted);
+    margin-top: 0.75rem;
+  }
+  .tip-box strong { color: var(--accent3); }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-section { max-width: 900px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .arch-diagram.visible { opacity: 1; transform: translateY(0); }
+
+  .arch-node {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0.5rem; padding: 1rem;
+  }
+
+  .arch-box {
+    width: 110px; height: 80px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.04em;
+    text-align: center; line-height: 1.4;
+    border: 1px solid;
+    transition: transform 0.3s ease;
+    cursor: default;
+  }
+  .arch-box:hover { transform: scale(1.08); }
+
+  .arch-box.blob-box { background: var(--blob-bg); border-color: var(--accent);  color: var(--accent); }
+  .arch-box.pg-box   { background: var(--pg-bg);   border-color: var(--accent2); color: var(--accent2); }
+  .arch-box.dbr-box  { background: var(--dbr-bg);  border-color: var(--accent3); color: var(--accent3); }
+  .arch-box.py-box   { background: #ff6b3515; border-color: var(--warn); color: var(--warn); }
+  .arch-box.vm-box   { background: #ffffff08; border-color: var(--muted); color: var(--muted); }
+
+  .arch-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; text-align: center;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .arch-arrow {
+    font-size: 1.5rem; color: var(--border);
+    padding: 0 0.25rem; align-self: center;
+    margin-top: -1.5rem;
+  }
+
+  /* ── OBJECTIVES ── */
+  .obj-section { max-width: 900px; margin: 0 auto; padding: 2rem 2rem 8rem; }
+
+  .obj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-top: 2rem;
+  }
+
+  .obj-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex; gap: 1rem; align-items: flex-start;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .obj-item.visible { opacity: 1; transform: translateY(0); }
+
+  .obj-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--border); line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .obj-text { font-size: 0.88rem; color: var(--muted); }
+  .obj-text strong { color: var(--text); display: block; margin-bottom: 0.25rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem; text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; color: var(--muted);
+  }
+  footer span { color: var(--accent); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1rem 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem; color: var(--accent);
+    letter-spacing: 0.15em;
+  }
+
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; color: var(--muted);
+    text-decoration: none; letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 200;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.1s linear;
+  }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .arch-diagram { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<nav>
+  <div class="nav-logo">AZURE · DÍA 3</div>
+  <ul class="nav-links">
+    <li><a href="#agenda">Agenda</a></li>
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#conceptos">Conceptos</a></li>
+    <li><a href="#arquitectura">Arquitectura</a></li>
+    <li><a href="#objetivos">Objetivos</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="grid-lines"></div>
+  <div class="hero-content">
+    <div class="day-badge">CURSO AZURE · DÍA 3 DE 5</div>
+    <h1>
+      <span class="line1">Almacenamiento</span>
+      <span class="line2">y Gestión de Datos</span>
+    </h1>
+    <p class="hero-sub">
+      Blob Storage como fuente de datos, PostgreSQL con capacidades geoespaciales
+      via PostGIS, y un primer acercamiento a Azure Databricks para análisis distribuido.
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-dot blue"></div>Blob Storage</div>
+      <div class="stat"><div class="stat-dot purple"></div>PostgreSQL + PostGIS</div>
+      <div class="stat"><div class="stat-dot green"></div>Azure Databricks</div>
+    </div>
+  </div>
+  <div class="scroll-hint">scroll</div>
+</section>
+
+<!-- TIMELINE -->
+<section class="timeline-section" id="agenda">
+  <div class="section-label">// agenda del día</div>
+  <div class="section-title">2 horas · 6 bloques</div>
+
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--muted)"></div>
+      <div class="tl-time">00:00 — 00:15 · 15 min</div>
+      <div class="tl-title">Repaso del Día 2 e introducción</div>
+      <div class="tl-desc">Conexión con lo que ya hicimos (VM + Blob). ¿Qué es almacenamiento estructurado vs. no estructurado? Servicios del día.</div>
+      <span class="tl-tag tag-theory">Teoría</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--accent)"></div>
+      <div class="tl-time">00:15 — 00:35 · 20 min</div>
+      <div class="tl-title">Blob Storage con Python</div>
+      <div class="tl-desc">Listar contenedores, descargar un CSV en memoria y cargarlo como DataFrame. Repaso rápido del SDK <code>azure-storage-blob</code>.</div>
+      <span class="tl-tag tag-python">Python · Notebook local</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--accent2)"></div>
+      <div class="tl-time">00:35 — 01:10 · 35 min</div>
+      <div class="tl-title">PostgreSQL Flexible Server + PostGIS</div>
+      <div class="tl-desc">Crear instancia en el portal (tier Burstable), configurar firewall, conectar con psycopg2, activar PostGIS, insertar puntos geográficos y ejecutar consultas espaciales ST_*.</div>
+      <span class="tl-tag tag-portal">Portal Azure</span>
+      <span class="tl-tag tag-python" style="margin-left:0.5rem">Python · Notebook local</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--warn)"></div>
+      <div class="tl-time">01:10 — 01:20 · 10 min</div>
+      <div class="tl-title">Break</div>
+      <div class="tl-desc">Pausa activa. Momento para preguntas rápidas y verificar que el cluster de Databricks está iniciando.</div>
+      <span class="tl-tag tag-break">Descanso</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--accent3)"></div>
+      <div class="tl-time">01:20 — 01:55 · 35 min</div>
+      <div class="tl-title">Azure Databricks: primer notebook</div>
+      <div class="tl-desc">Crear workspace y cluster Single Node. Importar el notebook de Databricks. Conectar a Blob con ABFS, leer CSV con Spark, conectar a PostgreSQL con JDBC y escribir resultados.</div>
+      <span class="tl-tag tag-python">Databricks Notebook</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--muted)"></div>
+      <div class="tl-time">01:55 — 02:00 · 5 min</div>
+      <div class="tl-title">Cierre y preview Día 4</div>
+      <div class="tl-desc">¿Cuándo usar cada servicio? Preview: usaremos estos datos como entrada para servicios de ML en Azure.</div>
+      <span class="tl-tag tag-theory">Cierre</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="services-section" id="servicios">
+  <div class="section-label">// servicios del día</div>
+  <div class="section-title">Tres herramientas, tres propósitos</div>
+
+  <div class="services-grid">
+
+    <div class="service-card blob">
+      <div class="card-glow"></div>
+      <div class="card-title">Blob Storage</div>
+      <div class="card-subtitle">Ya lo conocemos · Refuerzo</div>
+      <div class="card-desc">Almacén de objetos para cualquier tipo de archivo. Lo creamos el Día 1. Hoy lo usamos como fuente de datos para el pipeline.</div>
+      <ul class="card-features">
+        <li>Archivos CSV, JSON, imágenes, modelos</li>
+        <li>Acceso con cadena de conexión o SAS token</li>
+        <li>SDK Python: <code>azure-storage-blob</code></li>
+        <li>Acceso nativo desde Databricks (ABFS)</li>
+      </ul>
+    </div>
+
+    <div class="service-card pg">
+      <div class="card-glow"></div>
+      <div class="card-title">PostgreSQL + PostGIS</div>
+      <div class="card-subtitle">Flexible Server · Nuevo hoy</div>
+      <div class="card-desc">Base de datos relacional administrada. Activamos PostGIS para almacenar coordenadas y ejecutar consultas geoespaciales directamente en SQL.</div>
+      <ul class="card-features">
+        <li>PostgreSQL 16, totalmente administrado</li>
+        <li>PostGIS: tipo <code>geometry</code>, funciones ST_*</li>
+        <li>Firewall por IP desde el portal</li>
+        <li>Python: <code>psycopg2</code> · Databricks: JDBC</li>
+      </ul>
+    </div>
+
+    <div class="service-card dbr">
+      <div class="card-glow"></div>
+      <div class="card-title">Azure Databricks</div>
+      <div class="card-subtitle">Nuevo hoy · Análisis distribuido</div>
+      <div class="card-desc">Plataforma basada en Apache Spark. Conecta múltiples fuentes de datos en un entorno colaborativo de notebooks en la nube.</div>
+      <ul class="card-features">
+        <li>Workspace con notebooks colaborativos</li>
+        <li>Clusters de Spark administrados por Azure</li>
+        <li>Lectura directa de Blob sin descargar (ABFS)</li>
+        <li>Conexión a PostgreSQL con JDBC</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- CONCEPTOS -->
+<section class="concepts-section" id="conceptos">
+  <div class="section-label">// conceptos clave</div>
+  <div class="section-title">Antes de entrar al portal</div>
+
+  <div class="concept-block">
+    <div class="concept-header">
+      <div class="concept-num">01</div>
+      <div class="concept-title">PostgreSQL Flexible Server vs. Single Server</div>
+      <div class="concept-toggle">+</div>
+    </div>
+    <div class="concept-body">
+      <p><strong>Single Server</strong> es el modelo legado de Azure para PostgreSQL, actualmente en proceso de retiro. <strong>Flexible Server</strong> es el reemplazo actual: más configuración, mejor rendimiento y soporte de largo plazo.</p>
+      <ul>
+        <li>Mantenimiento programado personalizable</li>
+        <li>Alta disponibilidad con zona de disponibilidad</li>
+        <li>Soporte completo de extensiones como PostGIS</li>
+        <li>Tier <em>Burstable B1ms</em>: el más económico, ideal para el curso</li>
+      </ul>
+      <div class="tip-box"><strong>Costo estimado:</strong> el tier Burstable B1ms cuesta menos de $15 USD/mes. Recuerda eliminar la instancia al terminar el curso para no generar cargos.</div>
+    </div>
+  </div>
+
+  <div class="concept-block">
+    <div class="concept-header">
+      <div class="concept-num">02</div>
+      <div class="concept-title">PostGIS: qué agrega a PostgreSQL</div>
+      <div class="concept-toggle">+</div>
+    </div>
+    <div class="concept-body">
+      <p>PostGIS es una extensión que añade tipos de datos y funciones geoespaciales. Con ella, la base de datos puede almacenar y operar sobre puntos, líneas y polígonos.</p>
+      <ul>
+        <li>Tipo <code>geometry(POINT, 4326)</code>: almacena coordenadas en WGS84 (el sistema GPS)</li>
+        <li><code>ST_MakePoint(lon, lat)</code>: crea un punto desde coordenadas</li>
+        <li><code>ST_DistanceSphere</code>: distancia en metros entre dos puntos sobre la Tierra</li>
+        <li><code>ST_Within</code>: verificar si un punto está dentro de un polígono</li>
+        <li><code>ST_AsGeoJSON</code>: exportar geometría como GeoJSON estándar</li>
+      </ul>
+      <div class="tip-box"><strong>Activación:</strong> una sola línea SQL ejecutada una vez: <code>CREATE EXTENSION IF NOT EXISTS postgis;</code></div>
+    </div>
+  </div>
+
+  <div class="concept-block">
+    <div class="concept-header">
+      <div class="concept-num">03</div>
+      <div class="concept-title">Azure Databricks vs. Jupyter local</div>
+      <div class="concept-toggle">+</div>
+    </div>
+    <div class="concept-body">
+      <p>Un Jupyter Notebook corre en tu máquina con los recursos de tu computadora. Databricks corre en un <strong>cluster de Apache Spark</strong> en la nube, distribuido en múltiples nodos.</p>
+      <ul>
+        <li>Puede procesar terabytes de datos en paralelo</li>
+        <li>Varios usuarios colaboran en el mismo notebook en tiempo real</li>
+        <li>La interfaz es similar a Jupyter pero conectada a la nube</li>
+        <li>Acceso nativo a Blob Storage sin necesidad de descargar archivos</li>
+      </ul>
+      <div class="tip-box"><strong>Para el curso:</strong> usaremos un cluster <em>Single Node</em>. El notebook se importa desde el archivo <code>.ipynb</code> que se entrega. La interfaz es prácticamente idéntica a Jupyter.</div>
+    </div>
+  </div>
+
+  <div class="concept-block">
+    <div class="concept-header">
+      <div class="concept-num">04</div>
+      <div class="concept-title">ABFS y JDBC: los dos puentes de Databricks</div>
+      <div class="concept-toggle">+</div>
+    </div>
+    <div class="concept-body">
+      <p>Databricks usa dos protocolos distintos para conectarse a las fuentes de datos del día:</p>
+      <ul>
+        <li><strong>ABFS</strong> (Azure Blob File System): lee archivos de Blob Storage directamente desde Spark, sin descargarlos a ningún disco</li>
+        <li><strong>JDBC</strong> (Java Database Connectivity): protocolo estándar para conectarse a bases de datos relacionales como PostgreSQL</li>
+      </ul>
+      <div class="tip-box"><strong>Importante antes del ejercicio:</strong> el servidor PostgreSQL debe tener habilitada la IP del cluster de Databricks en su firewall. El portal muestra la IP de salida del workspace en <em>Settings > Cloud resources > Network</em>.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ARQUITECTURA -->
+<section class="arch-section" id="arquitectura">
+  <div class="section-label">// arquitectura del día</div>
+  <div class="section-title">Cómo se conecta todo</div>
+
+  <div class="arch-diagram">
+
+    <div class="arch-node">
+      <div class="arch-box py-box">Tu PC<br>Python<br>Notebook</div>
+      <div class="arch-label">local</div>
+    </div>
+
+    <div class="arch-arrow">→</div>
+
+    <div class="arch-node">
+      <div class="arch-box blob-box">Blob<br>Storage</div>
+      <div class="arch-label">archivos CSV</div>
+    </div>
+
+    <div class="arch-arrow">→</div>
+
+    <div class="arch-node">
+      <div class="arch-box pg-box">PostgreSQL<br>+ PostGIS</div>
+      <div class="arch-label">datos + geometría</div>
+    </div>
+
+    <div class="arch-arrow" style="opacity:0.2; letter-spacing:0.2em; font-size:1rem">· · ·</div>
+
+    <div class="arch-node">
+      <div class="arch-box dbr-box">Azure<br>Databricks</div>
+      <div class="arch-label">análisis distribuido</div>
+    </div>
+
+    <div class="arch-arrow">↔</div>
+
+    <div class="arch-node">
+      <div class="arch-box blob-box">Blob<br>Storage</div>
+      <div class="arch-label">ABFS directo</div>
+    </div>
+
+    <div class="arch-arrow">↔</div>
+
+    <div class="arch-node">
+      <div class="arch-box pg-box">PostgreSQL</div>
+      <div class="arch-label">JDBC</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- OBJETIVOS -->
+<section class="obj-section" id="objetivos">
+  <div class="section-label">// al terminar este día</div>
+  <div class="section-title">Serás capaz de…</div>
+
+  <div class="obj-grid">
+    <div class="obj-item">
+      <div class="obj-num">01</div>
+      <div class="obj-text">
+        <strong>Leer Blob con Python</strong>
+        Descargar archivos en memoria y procesarlos como DataFrames sin guardarlos en disco.
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-num">02</div>
+      <div class="obj-text">
+        <strong>Crear PostgreSQL en Azure</strong>
+        Desplegar un Flexible Server, configurar el firewall y conectarte con psycopg2.
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-num">03</div>
+      <div class="obj-text">
+        <strong>Activar y usar PostGIS</strong>
+        Habilitar la extensión, insertar puntos geográficos y ejecutar consultas ST_*.
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-num">04</div>
+      <div class="obj-text">
+        <strong>Navegar Azure Databricks</strong>
+        Crear un workspace, lanzar un cluster e importar un notebook desde archivo.
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-num">05</div>
+      <div class="obj-text">
+        <strong>Conectar Blob desde Databricks</strong>
+        Leer archivos directamente con ABFS y procesarlos como Spark DataFrames.
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-num">06</div>
+      <div class="obj-text">
+        <strong>Conectar PostgreSQL desde Databricks</strong>
+        Leer y escribir tablas usando el conector JDBC, incluidas consultas a PostGIS.
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Curso Introducción a Herramientas de Cómputo en la Nube · <span>Azure</span> · Día 3 de 5</p>
+  <p style="margin-top:0.5rem">Notebook local: <span>dia3_practica_local.ipynb</span> · Databricks: <span>dia3_databricks.ipynb</span></p>
+</footer>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.transform = `scaleX(${scrollTop / scrollHeight})`;
+  });
+
+  // Intersection observer for animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const siblings = Array.from(entry.target.parentElement.children);
+        entry.target.style.transitionDelay = `${(siblings.indexOf(entry.target) % 4) * 0.08}s`;
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.tl-item, .service-card, .concept-block, .arch-diagram, .obj-item')
+    .forEach(el => observer.observe(el));
+
+  // Accordion
+  document.querySelectorAll('.concept-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.closest('.concept-block').classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Día 3 — Requisitos del notebook local
+# Curso: Introducción a Herramientas de Cómputo en la Nube · Azure
+
+# Blob Storage via fsspec
+adlfs==2024.7.0
+fsspec==2024.9.0
+
+# Data
+pandas==2.2.3
+
+# PostgreSQL + PostGIS
+psycopg2-binary==2.9.9
+
+# Geospatial
+geopandas==1.0.1
+shapely==2.0.6
