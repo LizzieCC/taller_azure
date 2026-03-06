@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Día 1 — Introducción a la Nube y Azure</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;
+    --accent:#00c8ff;--accent2:#7b61ff;--accent3:#00e5a0;--warn:#ff6b35;
+    --text:#e8edf5;--muted:#6b7a99;--border:#1e2d45;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;}
+  .progress-bar{position:fixed;top:0;left:0;right:0;height:2px;z-index:200;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));transform-origin:left;transform:scaleX(0);transition:transform .1s linear;}
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;background:rgba(10,14,26,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .nav-logo{font-family:'Space Mono',monospace;font-size:.8rem;color:var(--accent);letter-spacing:.15em;}
+  .nav-links{display:flex;gap:1.5rem;list-style:none;}
+  .nav-links a{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}
+  .nav-links a:hover{color:var(--accent);}
+  @media(max-width:640px){.nav-links{display:none;}}
+
+  /* HERO */
+  .hero{min-height:100vh;display:grid;place-items:center;position:relative;overflow:hidden;padding:5rem 2rem 3rem;}
+  .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 20% 40%,#00c8ff14,transparent 60%),radial-gradient(ellipse 55% 70% at 80% 30%,#7b61ff10,transparent 60%);}
+  .grid-lines{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.35;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent);}
+  .hero-content{position:relative;text-align:center;max-width:860px;}
+  .day-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.2em;color:var(--accent);border:1px solid var(--accent);padding:.35rem 1rem;border-radius:2px;margin-bottom:2rem;animation:fadeUp .6s both;}
+  h1{font-size:clamp(2.4rem,5.5vw,4.8rem);font-weight:800;line-height:1.05;margin-bottom:1.5rem;animation:fadeUp .6s .15s both;}
+  h1 .l1{display:block;color:var(--text);}
+  h1 .l2{display:block;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .hero-sub{color:var(--muted);font-size:1.05rem;max-width:540px;margin:0 auto 2.5rem;animation:fadeUp .6s .3s both;}
+  .instructor{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--muted);animation:fadeUp .6s .45s both;}
+  .instructor span{color:var(--accent);}
+  .scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.7rem;font-family:'Space Mono',monospace;animation:pulse 2s infinite;}
+  .scroll-hint::after{content:'';width:1px;height:36px;background:linear-gradient(to bottom,var(--muted),transparent);}
+
+  /* GENERIC SECTION */
+  .section{max-width:920px;margin:0 auto;padding:5rem 2rem;}
+  .section-label{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem;}
+  .section-title{font-size:1.9rem;font-weight:800;margin-bottom:2.5rem;}
+
+  /* AGENDA */
+  .agenda-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
+  .agenda-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem;opacity:0;transform:translateY(20px);transition:opacity .4s,transform .4s;}
+  .agenda-item.visible{opacity:1;transform:translateY(0);}
+  .agenda-day{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);margin-bottom:.4rem;}
+  .agenda-title{font-size:.92rem;font-weight:600;color:var(--text);margin-bottom:.5rem;}
+  .agenda-item.today{border-color:var(--accent);background:linear-gradient(135deg,#00c8ff08,#00c8ff04);}
+  .agenda-item.today .agenda-day{color:var(--accent);}
+
+  /* OBJETIVOS */
+  .obj-list{display:flex;flex-direction:column;gap:1rem;}
+  .obj-row{display:flex;gap:1.25rem;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;opacity:0;transform:translateX(-20px);transition:opacity .5s,transform .5s;}
+  .obj-row.visible{opacity:1;transform:translateX(0);}
+  .obj-icon{width:36px;height:36px;border-radius:6px;display:grid;place-items:center;font-size:1rem;flex-shrink:0;}
+  .obj-text strong{display:block;font-size:.95rem;margin-bottom:.2rem;}
+  .obj-text span{font-size:.85rem;color:var(--muted);}
+
+  /* CONCEPTOS NUBE */
+  .modelos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;}
+  .modelo-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;opacity:0;transform:translateY(24px);transition:opacity .5s,transform .5s;}
+  .modelo-card.visible{opacity:1;transform:translateY(0);}
+  .modelo-card:hover{transform:translateY(-4px) !important;}
+  .modelo-label{font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;}
+  .modelo-name{font-size:1.1rem;font-weight:700;margin-bottom:.4rem;}
+  .modelo-sub{font-size:.8rem;color:var(--muted);margin-bottom:1rem;}
+  .modelo-features{list-style:none;}
+  .modelo-features li{font-size:.83rem;color:var(--muted);padding:.25rem 0;border-bottom:1px solid var(--border);display:flex;gap:.5rem;}
+  .modelo-features li:last-child{border-bottom:none;}
+  .modelo-features li::before{content:'·';font-size:1rem;}
+  .m-iaas{border-color:#00c8ff30;} .m-iaas .modelo-label,.m-iaas .modelo-features li::before{color:var(--accent);}
+  .m-paas{border-color:#7b61ff30;} .m-paas .modelo-label,.m-paas .modelo-features li::before{color:var(--accent2);}
+  .m-saas{border-color:#00e5a030;} .m-saas .modelo-label,.m-saas .modelo-features li::before{color:var(--accent3);}
+
+  /* BENEFICIOS */
+  .beneficios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+  .ben-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;display:flex;flex-direction:column;gap:.5rem;opacity:0;transform:translateY(16px);transition:opacity .4s,transform .4s;}
+  .ben-item.visible{opacity:1;transform:translateY(0);}
+  .ben-icon{font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;}
+  .ben-title{font-size:.95rem;font-weight:600;}
+  .ben-desc{font-size:.83rem;color:var(--muted);}
+
+  /* AZURE COMPONENTES */
+  .azure-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;}
+  .az-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;opacity:0;transform:translateY(20px);transition:opacity .4s,transform .4s;}
+  .az-card.visible{opacity:1;transform:translateY(0);}
+  .az-card:hover{border-color:var(--accent);transform:translateY(-3px);}
+  .az-tag{font-family:'Space Mono',monospace;font-size:.63rem;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;margin-bottom:.5rem;}
+  .az-title{font-size:1rem;font-weight:700;margin-bottom:.4rem;}
+  .az-desc{font-size:.84rem;color:var(--muted);}
+  .az-example{margin-top:.75rem;background:var(--surface2);border-left:2px solid var(--accent3);padding:.5rem .75rem;border-radius:0 4px 4px 0;font-size:.78rem;color:var(--accent3);}
+
+  /* PRACTICA */
+  .practica-steps{display:flex;flex-direction:column;gap:1rem;}
+  .practica-step{display:flex;gap:1.25rem;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;opacity:0;transform:translateX(-20px);transition:opacity .5s,transform .5s;}
+  .practica-step.visible{opacity:1;transform:translateX(0);}
+  .step-num{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--bg);background:var(--accent);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;margin-top:.15rem;}
+  .step-body strong{display:block;font-size:.95rem;margin-bottom:.25rem;}
+  .step-body p{font-size:.85rem;color:var(--muted);}
+  .step-body code{background:var(--surface2);padding:.1rem .4rem;border-radius:3px;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--accent);}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:2rem;text-align:center;font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);}
+  footer span{color:var(--accent);}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes pulse{0%,100%{opacity:.35;}50%{opacity:.9;}}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<nav>
+  <div class="nav-logo">AZURE · DÍA 1</div>
+  <ul class="nav-links">
+    <li><a href="#agenda">Agenda</a></li>
+    <li><a href="#objetivos">Objetivos</a></li>
+    <li><a href="#modelos">IaaS/PaaS/SaaS</a></li>
+    <li><a href="#azure">Azure</a></li>
+    <li><a href="#practica">Práctica</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="grid-lines"></div>
+  <div class="hero-content">
+    <div class="day-badge">CURSO AZURE · DÍA 1 DE 5</div>
+    <h1>
+      <span class="l1">Introducción a la nube</span>
+      <span class="l2">y Azure</span>
+    </h1>
+    <p class="hero-sub">Conceptos fundamentales, modelos de servicio, portal de Azure y tu primer Resource Group.</p>
+    <div class="instructor">Por: <span>Lizzie Cañamar</span> · Marzo 2026</div>
+  </div>
+  <div class="scroll-hint">scroll</div>
+</section>
+
+<!-- AGENDA DEL CURSO -->
+<section class="section" id="agenda">
+  <div class="section-label">// agenda del curso completo</div>
+  <div class="section-title">5 días · 5 capas del stack de Azure</div>
+  <div class="agenda-grid">
+    <div class="agenda-item today">
+      <div class="agenda-day">DÍA 1 — HOY</div>
+      <div class="agenda-title">Introducción a la nube y Azure</div>
+      <div style="font-size:.8rem;color:var(--muted);">Portal, recursos, servicios, primer Resource Group</div>
+    </div>
+    <div class="agenda-item">
+      <div class="agenda-day">DÍA 2</div>
+      <div class="agenda-title">Máquinas Virtuales</div>
+      <div style="font-size:.8rem;color:var(--muted);">Crear, configurar, conectar via SSH</div>
+    </div>
+    <div class="agenda-item">
+      <div class="agenda-day">DÍA 3</div>
+      <div class="agenda-title">Almacenamiento y datos</div>
+      <div style="font-size:.8rem;color:var(--muted);">Blob, PostgreSQL, PostGIS, pipelines</div>
+    </div>
+    <div class="agenda-item">
+      <div class="agenda-day">DÍA 4</div>
+      <div class="agenda-title">Análisis y ML</div>
+      <div style="font-size:.8rem;color:var(--muted);">Databricks, Delta Lake, Azure ML</div>
+    </div>
+    <div class="agenda-item">
+      <div class="agenda-day">DÍA 5</div>
+      <div class="agenda-title">Taller integrador</div>
+      <div style="font-size:.8rem;color:var(--muted);">ENIGH + programas sociales + pipeline completo</div>
+    </div>
+  </div>
+</section>
+
+<!-- OBJETIVOS -->
+<section class="section" id="objetivos">
+  <div class="section-label">// objetivos de la sesión</div>
+  <div class="section-title">Al terminar este día serás capaz de…</div>
+  <div class="obj-list">
+    <div class="obj-row">
+      <div class="obj-icon" style="background:#00c8ff18;">☁</div>
+      <div class="obj-text">
+        <strong>Comprender los conceptos básicos de computación en la nube</strong>
+        <span>Qué significa que un recurso esté "en la nube", diferencias con infraestructura local, y por qué importa para análisis de datos y política pública.</span>
+      </div>
+    </div>
+    <div class="obj-row">
+      <div class="obj-icon" style="background:#7b61ff18;">⬡</div>
+      <div class="obj-text">
+        <strong>Navegar el portal de Azure con confianza</strong>
+        <span>Localizar servicios, entender la estructura de suscripciones y regiones, y leer el panel de costos.</span>
+      </div>
+    </div>
+    <div class="obj-row">
+      <div class="obj-icon" style="background:#00e5a018;">▣</div>
+      <div class="obj-text">
+        <strong>Crear un Resource Group y explorar servicios clave</strong>
+        <span>Provisionar tu primer contenedor lógico de recursos y entender cómo organizar proyectos de datos en Azure.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUÉ ES LA NUBE -->
+<section class="section" style="padding-top:0;" id="nube">
+  <div class="section-label">// conceptos base</div>
+  <div class="section-title">¿Qué es la computación en la nube?</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;margin-bottom:2.5rem;">
+    <p style="font-size:1rem;color:var(--muted);max-width:720px;line-height:1.9;">La computación en la nube es el acceso bajo demanda, a través de internet, a recursos informáticos —servidores, almacenamiento, bases de datos, redes, software— sin necesidad de poseerlos físicamente. Se paga solo por lo que se usa, y se puede escalar hacia arriba o hacia abajo en minutos.</p>
+    <div style="margin-top:1.5rem;background:var(--surface2);border-left:3px solid var(--accent);padding:.85rem 1.1rem;border-radius:0 6px 6px 0;font-size:.88rem;color:var(--muted);">
+      <strong style="color:var(--accent);">Ejemplo concreto:</strong> Analizar la ENIGH 2022 (88,000 hogares) en tu laptop puede tardar minutos o fallar por falta de RAM. En Azure, puedes hacerlo en segundos con una VM de 64 GB que desaparece al terminar.
+    </div>
+  </div>
+
+  <!-- MODELOS -->
+  <div class="section-label" id="modelos">// modelos de servicio</div>
+  <div class="section-title" style="font-size:1.5rem;margin-bottom:1.5rem;">IaaS · PaaS · SaaS</div>
+  <div class="modelos-grid">
+    <div class="modelo-card m-iaas">
+      <div class="modelo-label">IaaS</div>
+      <div class="modelo-name">Infrastructure as a Service</div>
+      <div class="modelo-sub">Tú gestionas: SO, aplicaciones y datos</div>
+      <ul class="modelo-features">
+        <li>Máquinas Virtuales de Azure</li>
+        <li>Redes virtuales (VNet)</li>
+        <li>Discos administrados</li>
+        <li>Control total del entorno</li>
+      </ul>
+    </div>
+    <div class="modelo-card m-paas">
+      <div class="modelo-label">PaaS</div>
+      <div class="modelo-name">Platform as a Service</div>
+      <div class="modelo-sub">Azure gestiona: infraestructura y SO</div>
+      <ul class="modelo-features">
+        <li>Azure PostgreSQL Flexible Server</li>
+        <li>Azure Databricks</li>
+        <li>Azure Machine Learning</li>
+        <li>Tú te enfocas en el código</li>
+      </ul>
+    </div>
+    <div class="modelo-card m-saas">
+      <div class="modelo-label">SaaS</div>
+      <div class="modelo-name">Software as a Service</div>
+      <div class="modelo-sub">Todo gestionado, listo para usar</div>
+      <ul class="modelo-features">
+        <li>Microsoft 365 / Teams</li>
+        <li>Power BI Service</li>
+        <li>GitHub (en la nube)</li>
+        <li>Sin instalación ni mantenimiento</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFICIOS -->
+<section class="section" style="padding-top:0;">
+  <div class="section-label">// por qué importa</div>
+  <div class="section-title">Beneficios para análisis de datos y política pública</div>
+  <div class="beneficios-grid">
+    <div class="ben-item">
+      <div class="ben-icon">Escalabilidad</div>
+      <div class="ben-title">Escala según demanda</div>
+      <div class="ben-desc">Sube de 2 a 64 cores en 5 minutos para un análisis urgente. Baja de regreso cuando termines. Pagas solo las horas usadas.</div>
+    </div>
+    <div class="ben-item">
+      <div class="ben-icon">Reproducibilidad</div>
+      <div class="ben-title">Entornos consistentes</div>
+      <div class="ben-desc">Elimina el "en mi máquina sí funciona". Todos los integrantes del equipo trabajan en entornos idénticos configurados una sola vez.</div>
+    </div>
+    <div class="ben-item">
+      <div class="ben-icon">Colaboración</div>
+      <div class="ben-title">Trabajo en equipo</div>
+      <div class="ben-desc">Comparte datasets, notebooks y modelos con permisos granulares. Sin correos con archivos adjuntos, sin versiones perdidas.</div>
+    </div>
+    <div class="ben-item">
+      <div class="ben-icon">Costo</div>
+      <div class="ben-title">Pago por uso</div>
+      <div class="ben-desc">Sin inversión en servidores físicos. Un servidor de PostgreSQL cuesta ~$0.02/hora. Un análisis completo puede costar menos de $1 USD.</div>
+    </div>
+  </div>
+</section>
+
+<!-- AZURE -->
+<section class="section" style="padding-top:0;" id="azure">
+  <div class="section-label">// la plataforma del curso</div>
+  <div class="section-title">Componentes esenciales de Azure</div>
+  <div class="azure-grid">
+    <div class="az-card">
+      <div class="az-tag">Portal</div>
+      <div class="az-title">Portal de Azure</div>
+      <div class="az-desc">Interfaz web para gestionar todos los recursos. Permite crear, configurar, monitorear y eliminar cualquier servicio sin escribir código.</div>
+      <div class="az-example">portal.azure.com</div>
+    </div>
+    <div class="az-card">
+      <div class="az-tag">Regiones</div>
+      <div class="az-title">Regiones y centros de datos</div>
+      <div class="az-desc">Ubicación física de los servidores. Afecta latencia, costo y disponibilidad de servicios. Para México: East US o South Central US.</div>
+      <div class="az-example">East US · South Central US · Brazil South</div>
+    </div>
+    <div class="az-card">
+      <div class="az-tag">Suscripción</div>
+      <div class="az-title">Suscripciones</div>
+      <div class="az-desc">Unidad de facturación y administración. Define límites de recursos disponibles. Una organización puede tener múltiples suscripciones por proyecto o equipo.</div>
+      <div class="az-example">Subscription ID: xxxxxxxx-xxxx-xxxx</div>
+    </div>
+    <div class="az-card">
+      <div class="az-tag">Resource Group</div>
+      <div class="az-title">Resource Groups</div>
+      <div class="az-desc">Contenedor lógico para organizar recursos relacionados (VMs, Storage, bases de datos). Permite controlar permisos y costos por proyecto. Borrar el RG elimina todo lo que contiene.</div>
+      <div class="az-example">rg-proyecto-enigh-2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRÁCTICA -->
+<section class="section" style="padding-top:0;" id="practica">
+  <div class="section-label">// primera práctica guiada</div>
+  <div class="section-title">Lo que haremos hoy</div>
+  <div class="practica-steps">
+
+    <div class="practica-step">
+      <div class="step-num" style="background:var(--accent);">1</div>
+      <div class="step-body">
+        <strong>Crear cuenta gratuita de Azure</strong>
+        <p>Ir a <code>azure.microsoft.com/free</code> — incluye $200 USD de crédito por 30 días y servicios gratuitos por 12 meses. Requiere tarjeta de crédito para verificación (no se cobra).</p>
+      </div>
+    </div>
+
+    <div class="practica-step">
+      <div class="step-num" style="background:var(--accent);">2</div>
+      <div class="step-body">
+        <strong>Crear un Resource Group</strong>
+        <p>Portal → <code>Resource groups</code> → <code>+ Create</code>. Nombrar <code>rg-curso-azure</code>, seleccionar región <code>East US</code>. Este RG será el hogar de todos los recursos del curso.</p>
+      </div>
+    </div>
+
+    <div class="practica-step">
+      <div class="step-num" style="background:var(--accent);">3</div>
+      <div class="step-body">
+        <strong>Explorar servicios desde el portal</strong>
+        <p>Navegar a <code>All services</code> y explorar categorías: Storage, Databases, Analytics, AI + Machine Learning. Identificar los servicios que usaremos los próximos 4 días.</p>
+      </div>
+    </div>
+
+    <div class="practica-step">
+      <div class="step-num" style="background:var(--accent);">4</div>
+      <div class="step-body">
+        <strong>Crear un Storage Account y un Blob Container</strong>
+        <p>Portal → <code>Storage accounts</code> → <code>+ Create</code>. Tier <code>Standard LRS</code>, habilitar <em>hierarchical namespace</em> para Data Lake Gen2. Crear contenedor <code>mi-contenedor</code>.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p>Curso: Introducción a Herramientas de Cómputo en la Nube · <span>Azure</span> · Día 1 de 5</p>
+  <p style="margin-top:.5rem;">Por: <span>Lizzie Cañamar</span> · Marzo 2026</p>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    document.getElementById('progress').style.transform =
+      `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight)})`;
+  });
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const sib = Array.from(e.target.parentElement.children);
+        e.target.style.transitionDelay = `${(sib.indexOf(e.target) % 5) * 0.09}s`;
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.agenda-item,.obj-row,.modelo-card,.ben-item,.az-card,.practica-step').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
