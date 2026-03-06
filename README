@@ -4,3 +4,14 @@ source .venv/bin/activate        # Mac/Linux
 
 pip install -r requirements.txt
 
+az storage account keys renew \
+  --account-name sablobtaller \
+  --resource-group rg_taller_azure \
+  --key primary
+
+az postgres flexible-server update \
+  --name db-taller-dia3.postgres.database.azure.com \
+  --resource-group rg_taller_azure \
+  --admin-password X&fMu7qom66e
+
+https://portal.azure.com/#view/Microsoft_Azure_Policy/AssignmentDetail.ReactView/id/%2Fsubscriptions%2F6963d383-afd5-431a-85e2-f90068017dba%2Fproviders%2Fmicrosoft.authorization%2Fpolicyassignments%2Fsys.regionrestriction/selectedScopes~/%5B%22%2Fsubscriptions%2F6963d383-afd5-431a-85e2-f90068017dba%22%2C%22%2Fsubscriptions%2F1b5b3f85-364e-4e71-ae25-ac094590ef08%22%2C%22%2Fsubscriptions%2F636d9bd6-363c-4015-906d-279622ac79ce%22%2C%22%2Fsubscriptions%2Fc1a9edbc-13d0-45d1-83f9-efe629ad37f1%22%2C%22%2Fsubscriptions%2Fdbf80e25-e7dd-4b20-879a-358702036e24%22%5D

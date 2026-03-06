@@ -19,7 +19,7 @@ set -euo pipefail
 # ── Argumentos ──────────────────────────────────────────────────────────────
 if [[ $# -lt 2 ]]; then
   echo "Uso: bash setup_dia5.sh <RESOURCE_GROUP> <LOCATION>"
-  echo "Ejemplo: bash setup_dia5.sh rg-curso-dia5 eastus"
+  echo "Ejemplo: bash setup_dia5.sh rg-taller-dia5 westus2"
   exit 1
 fi
 
@@ -30,13 +30,13 @@ LOC="$2"
 SUFFIX="${RG//[^a-z0-9]/}"          # solo letras y numeros
 STORAGE_ACCOUNT="sa${SUFFIX:0:18}"  # max 24 chars, lowercase
 BLOB_CONTAINER="enigh-datos"
-DATALAKE_CONTAINER="datalake-dia5"
+# DATALAKE_CONTAINER="datalake-dia5"
 PG_SERVER="pg-${SUFFIX:0:40}-dia5"
 PG_ADMIN="cursoazure"
 PG_PASSWORD="CursoAzure2026!"       # cambia esto antes de usar en produccion
 PG_DB="cursodb"
 AML_WORKSPACE="aml-workspace-dia5"
-DBR_WORKSPACE="dbr-workspace-dia5"
+# DBR_WORKSPACE="dbr-workspace-dia5"
 
 # ── Colores para output ──────────────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -102,19 +102,19 @@ az storage container create \
   --output none
 ok "Blob container: $BLOB_CONTAINER"
 
-# Contenedor Data Lake para datos procesados
-az storage container create \
-  --name "$DATALAKE_CONTAINER" \
-  --connection-string "$CONN_STR" \
-  --output none
-ok "Data Lake container: $DATALAKE_CONTAINER"
+## Contenedor Data Lake para datos procesados
+#az storage container create \
+#  --name "$DATALAKE_CONTAINER" \
+#  --connection-string "$CONN_STR" \
+#  --output none
+#ok "Data Lake container: $DATALAKE_CONTAINER"
 
 # ── 3. PostgreSQL Flexible Server ────────────────────────────────────────────
 log "3/7 Creando PostgreSQL Flexible Server (esto tarda ~3 minutos)..."
 az postgres flexible-server create \
   --name "$PG_SERVER" \
   --resource-group "$RG" \
-  --location "$LOC" \
+  --location mexicocentral \
   --admin-user "$PG_ADMIN" \
   --admin-password "$PG_PASSWORD" \
   --sku-name Standard_B1ms \
@@ -184,14 +184,14 @@ az ml compute create \
 ok "Compute Cluster: cluster-dia5"
 
 # ── 6. Databricks Workspace ──────────────────────────────────────────────────
-log "6/7 Creando Databricks Workspace (tier Standard)..."
-az databricks workspace create \
-  --name "$DBR_WORKSPACE" \
-  --resource-group "$RG" \
-  --location "$LOC" \
-  --sku standard \
-  --output none
-ok "Databricks Workspace: $DBR_WORKSPACE"
+#log "6/7 Creando Databricks Workspace (tier Standard)..."
+#az databricks workspace create \
+#  --name "$DBR_WORKSPACE" \
+#  --resource-group "$RG" \
+#  --location "$LOC" \
+#  --sku standard \
+#  --output none
+#ok "Databricks Workspace: $DBR_WORKSPACE"
 
 # ── 7. Output final con credenciales ─────────────────────────────────────────
 log "7/7 Recopilando credenciales..."
@@ -214,7 +214,7 @@ echo "  STORAGE"
 echo "    Account name    : $STORAGE_ACCOUNT"
 echo "    Account key     : ${STORAGE_KEY:0:20}...  (ver completo abajo)"
 echo "    Blob container  : $BLOB_CONTAINER"
-echo "    DLake container : $DATALAKE_CONTAINER"
+#echo "    DLake container : $DATALAKE_CONTAINER"
 echo "    Connection str  : guardado en credenciales.env"
 echo ""
 echo "  POSTGRESQL"
@@ -228,12 +228,12 @@ echo "  AZURE ML"
 echo "    Workspace   : $AML_WORKSPACE"
 echo "    Resource Grp: $RG"
 echo "    Subscription: $AML_SUB"
-echo ""
-echo "  DATABRICKS"
-echo "    Workspace: $DBR_WORKSPACE"
-echo "    URL      : $(az databricks workspace show --name $DBR_WORKSPACE --resource-group $RG --query 'workspaceUrl' -o tsv 2>/dev/null || echo 'ver portal.azure.com')"
-echo ""
-
+#echo ""
+#echo "  DATABRICKS"
+#echo "    Workspace: $DBR_WORKSPACE"
+#echo "    URL      : $(az databricks workspace show --name $DBR_WORKSPACE --resource-group $RG --query 'workspaceUrl' -o tsv 2>/dev/null || echo 'ver portal.azure.com')"
+#echo ""
+#
 # Guardar credenciales en archivo .env para usar en los notebooks
 cat > credenciales.env << ENVEOF
 # Credenciales generadas por setup_dia5.sh
@@ -242,7 +242,6 @@ cat > credenciales.env << ENVEOF
 STORAGE_ACCOUNT_NAME=${STORAGE_ACCOUNT}
 STORAGE_ACCOUNT_KEY=${STORAGE_KEY}
 BLOB_CONTAINER=${BLOB_CONTAINER}
-DATALAKE_CONTAINER=${DATALAKE_CONTAINER}
 
 PG_HOST=${PG_HOST}
 PG_PORT=5432
